@@ -4,7 +4,9 @@ import cv2
 from torch.utils.data import Dataset, DataLoader
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-
+import torch
+import torch.nn as nn
+from torch.optim import Adam
 #Define the dataset class
 class PolyDataset(Dataset):
     def __init__(self, image_paths, mask_paths, transform=None):
@@ -31,3 +33,21 @@ transform = A.Compose([
     A.Normalize(mean=(0.5,), std=(0.5,)),
     ToTensorV2(),
 ])
+
+# Model and optimizer
+model = build_unet()
+optimizer = Adam(model.parameters(), lr=1e-3)
+criterion = nn.BCEWithLogitsLoss()
+
+# Training loop
+for epoch in range(epochs):
+    model.train()
+    for images, masks in train_loader:
+        optimizer.zero_grad()
+        outputs = model(images)
+        loss = criterion(outputs, masks)
+        loss.backward()
+        optimizer.step()
+
+torch.save(model.state_dict(), "checkpoints/best_model.pth")
+
